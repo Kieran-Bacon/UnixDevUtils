@@ -1,0 +1,144 @@
+#!/bin/bash
+
+# Requirements
+## sudo apt-get install python3-venv
+## mkdir ~/.pyenvs
+
+if [[ ! $_ != $0 ]]; then
+    echo "ERROR :: pyenv is required to be sourced to be used. Alias pyenv='source pyenv' in .bash_aliases so that it might be \
+used nicely"
+    exit
+fi
+
+# Show the help for the program
+if [ $# -eq "0" ] || [ $1 == "-h" ]; then
+    # If arguments are provided, and the first argument is the help flag, show the help page
+    echo "pyenv [options] environment_name"
+    echo ""
+    echo "Interact with and manage the creation, operation, and destruction of python virtual environments."
+
+    echo "    -c [name]    Create a new virtual environment with the name provided"
+    echo "    -d [name]    Delete a virtual environment with the name provided"
+    echo "    -l    List virtual environments that have been created"
+    echo "    -r    Print the required/install packages of the environment"
+    return
+fi
+
+# The home location of the python environments
+PYENVHOME="$HOME/.pyenvs"
+FEATURES="-c -d -l -r"
+
+# Handle the creation of a new environment
+if [ $1 == "-c" ]; then
+
+    # Assert that there are two arguments
+    if [ $# -ne "2" ]; then
+        echo "Create requires a name be provided, and nothing else"
+        return
+    fi
+
+    # Define the environment path
+    environment_path="$PYENVHOME/$2"
+
+    # Checks to ensure environment before creating the new python environment
+    if [ -d "$environment_path" ]; then
+        # Check that there isn't already an environment by that name
+        echo "An environment by that name already exists, first call -d on the environment before creating a new one"
+        return
+    else
+        for item in $FEATURES;
+        do
+            if [ $2 == $item ]; then
+                echo "Provided environment name is invalid as its a feature title. Please use another name"
+                return
+            fi
+        done
+
+
+        # The environment is free to be created, ensure that the directory name is valid by creating it
+        # Fail immediately if not possible
+        if ! mkdir "$environment_path" ; then
+            return
+        fi
+    fi
+
+    # Create the environment
+    python3 -m venv "$environment_path"
+
+    return
+fi
+
+# Handle the delation of an environment
+if [ $1 == "-d" ]; then
+    # Assert that there are two arguments
+    if [ $# -ne "2" ]; then
+        echo "Delete requires a name be provided, and nothing else"
+        return
+    fi
+
+    # Define the environment path
+    environment_path="$PYENVHOME/$2"
+
+    if [ -d "$environment_path" ]; then
+        rm -r "$environment_path"
+        echo "Deleted environment $2"
+        return
+    else
+        echo "Could not find an environment by the name '$2' to delete"
+        return
+    fi
+fi
+
+# List the python environments available
+if [ $1 == "-l" ]; then
+
+    # List all the environment directories that show virtual environments that have been created
+    for environment in $PYENVHOME/*
+    do
+        echo "${environment#$PYENVHOME/}"
+    done
+
+    return
+fi
+
+# Show an environments installed packages
+if [ $1 == "-r" ]; then
+
+    # Assert that the flag has the correct number of arguments
+    if [ $# -ne "2" ]; then
+        echo "Requirement flag requires an environment name, and only its name"
+        return
+    fi
+
+    # The collect and display the installed packages of the environment
+    "$PYENVHOME/$2/bin/pip" freeze
+    return
+fi
+
+# Source the environment
+environment_path="$PYENVHOME/$1"
+
+# Activate the environment and set various functions for work
+if [ -d "$environment_path" ]; then
+
+    # Activate the environment
+    source "$environment_path/bin/activate"
+
+    # Convert the deactivate function into another such that it can be overloaded
+    eval "$(echo "python_deactivate()"; declare -f deactivate | tail -n +2)"
+
+    # Perform a pip install and record against the activated environment what was installed
+    pipenv () {
+        # Call the traditional pip install function for the environment
+        pip "$@"
+    }
+
+    # Deactivate the environment and turn off the pipenv function
+    deactivate () {
+        python_deactivate
+        unset -f "pipenv"
+        unset -f "python_deactivate"
+    }
+else
+    echo "There is no environment with the name '$1', to list environments call 'pyenv ls'"
+fi
