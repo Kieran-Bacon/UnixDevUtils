@@ -1,5 +1,10 @@
 # installer
 
+if [ ! -f "./$1" ]; then
+    echo "Unrecognised name. Exitting"
+    exit
+fi
+
 if [ $1 == "pyenv" ]; then
     # Install the virtual environment
     sudo apt-get install python3-venv
