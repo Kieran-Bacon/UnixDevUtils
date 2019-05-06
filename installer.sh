@@ -9,17 +9,6 @@ if [ $1 == "pyenv" ]; then
 
     # add the aliase of the
     echo "alias pyenv='source pyenv'" >> "$HOME/.bash_aliases"
-
-    # Ensure that the user binary directory is made
-    if [ ! -d "$HOME/bin" ]; then
-        mkdir "$HOME/bin"
-    fi
-
-    # Copy the software to the binary directory
-    cp ./pyenv "$HOME/bin/"
-
-    # Update the permissions of file
-    sudo chmod +x "$HOME/bin/pyenv"
 fi
 
 if [ $1 == "backup" ]; then
@@ -28,10 +17,15 @@ if [ $1 == "backup" ]; then
 
     # Make the directory for storing info about backup logging
     mkdir "$HOME/.backup"
-
-    # Copy the software to the binary directory
-    cp ./backup "$HOME/bin/"
-
-    # Update the permissions of file
-    sudo chmod +x "$HOME/bin/backup"
 fi
+
+# Ensure that the user binary directory is made
+if [ ! -d "$HOME/bin" ]; then
+    mkdir "$HOME/bin"
+fi
+
+# Copy the software to the binary directory
+cp "./$1" "$HOME/bin/"
+
+# Update the permissions of file
+sudo chmod +x "$HOME/bin/$1"
