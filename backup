@@ -1,0 +1,156 @@
+#!/bin/bash
+
+# Handle arguments passed to the back up process
+
+isArchive="False"
+
+for argument in "$@"
+do
+	if [ "$argument" == "-a" ]; then
+		isArchive="True"
+	fi
+done
+
+echo "Beginning backup process..."
+
+# Ensure the environment is prepared for the backup program
+
+if [ ! -d $HOME/.backup ]; then
+	# The backup directory is not created therefore create it for storing monitor output
+    mkdir "$HOME/.backup"
+fi
+
+# The monitor path for the user
+backup_monitor_path="$HOME/.backup/backup_monitor.log"
+backup_monitor_directories=""
+
+# Kill the monitoring process if it is running - remove its automatic running from profile
+pkill -f "inotifywait -mr -e moved_from"
+sed -i "/inotifywait -mr -e moved_from/d" $HOME/.profile
+
+# Look through all plugged in media
+for directory in /media/$USER/*
+do
+
+	# Check to see if the media contains the backup indicator
+	if [ -f "$directory/backup.indicator" ]; then
+
+		echo "Found backup media device at $directory. Backing up..."
+
+		# Ensure that a backup locations has been provided
+		if [ -d "$directory/content" ]; then
+			backup_directory="$directory/content"
+		elif [ -d "$directory/home" ]; then
+			backup_directory="$directory/home"
+		else
+			echo "Could not find directory to backup onto. Looking for 'content'/'home'"
+			exit
+		fi
+
+		# Read the config in the media device
+		for line in $(<"$directory/backup.indicator")
+		do
+			# Break down the lines in the config
+			IFS='=' read key value <<< $(echo ${line})
+
+			# If the key is the number of backups - perform the calibration
+			if [ "$key" == "archive_count" ] && [ "$isArchive" == "True" ]; then
+
+				# Check that the value given is a valid int
+				if [ ! -z "${value##*[!0-9]*}" ]; then
+
+					# The backup indicator to be added to the name
+					bk_indicator="_backup_"
+					extension=".tar.gz"
+
+					# Remove any backups above the limit
+					delete_index="$value"
+					while true; do
+						backup_name="$backup_directory$bk_indicator$delete_index"
+
+						if [ -f "$backup_name" ]; then
+							rm "$backup_name$extension"
+							delete_index=$((delete_index + 1))
+						else
+							# There are not more backups to remove
+							break
+						fi
+					done
+
+					# Move the other back ups down in the numbering system
+					for index in `seq $value -1 2`
+					do
+						recent=$((index - 1))
+
+						file1="$backup_directory$bk_indicator$recent$extension"
+						file2="$backup_directory$bk_indicator$index$extension"
+
+						mv $file1 $file2
+					done
+
+
+				else
+					echo "Incorrect value for backup count"
+				fi
+			fi
+
+		done
+
+		if [ "$isArchive" == "True" ]; then
+			echo "Archiving current backup folder"
+			index="1"
+			backup_name="$backup_directory$bk_indicator$index$extension"
+			tar cf - $backup_directory -P | pv -s $(du -sb $backup_directory | awk '{print $1}') | gzip > $backup_name
+		fi
+
+
+		# Read the monitor log to remove files that are not to be recorded anymore
+		if [ -f $backup_monitor_path ]; then
+
+			while read line; do
+
+				# Parse the line to find the path of the previously existing file
+				deletedPath=`python -c "import re; match = re.search('(.+\/) ([\w_]+) (.+)', '''$line'''); print(match.group(1)+match.group(3))"`
+				# Remove the local home path aspect of the absolute path to make it relative to home (give you in home)
+				relativeDeletedPath=${deletedPath#$HOME/}
+
+				# If the file exists on the device - remove it
+				if [ -f "$backup_directory/$relativeDeletedPath" ]; then
+					rm "$backup_directory/$relativeDeletedPath"
+				fi
+			done < $backup_monitor_path
+
+		fi
+
+		# For the directory that has been selected back up from home, all those directories
+		for name in `ls -A $backup_directory`
+		do
+			if [ -d "$HOME/$name" ]; then
+				echo "Checking for updated files in $name"
+				rsync -ahutE --info=progress2 "$HOME/$name/" "$backup_directory/$name"
+				backup_monitor_directories="$backup_monitor_directories $HOME/$name"
+			fi
+		done
+	fi
+done
+
+echo "Backup Process has concluded."
+
+# Remove the Monitor log
+if [ -f $backup_monitor_path ]; then
+	rm $backup_monitor_path
+fi
+
+# Start the monitoring off again
+if [ ! -z "$backup_monitor_directories" ]; then
+
+	# Add the monitor option to the startup folder to allow the monitoring to occur
+	profile="$HOME/.profile"
+	monitor_command="inotifywait -mr -e moved_from -o $backup_monitor_path $backup_monitor_directories &"
+
+	# Write to file the command to be run on startup
+	echo "$monitor_command" >> $profile
+
+	# Execute the command - route output to null to avoid output
+	eval "$monitor_command exit" > /dev/null 2>&1
+fi

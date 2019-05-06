@@ -21,3 +21,17 @@ if [ $1 == "pyenv" ]; then
     # Update the permissions of file
     sudo chmod +x "$HOME/bin/pyenv"
 fi
+
+if [ $1 == "backup" ]; then
+    # Make the backup directory - install the
+    sudo apt-get install inotify-tools
+
+    # Make the directory for storing info about backup logging
+    mkdir "$HOME/.backup"
+
+    # Copy the software to the binary directory
+    cp ./backup "$HOME/bin/"
+
+    # Update the permissions of file
+    sudo chmod +x "$HOME/bin/backup"
+fi
