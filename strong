@@ -1,0 +1,54 @@
+#!/bin/bash
+
+#! Requires to be added to the aliase as source strong
+
+if [[ ! $_ != $0 ]]; then
+    echo "ERROR :: pyenv is required to be sourced to be used. Alias pyenv='source pyenv' in .bash_aliases so that it might be \
+used nicely"
+    exit
+fi
+
+# Show the help for the program
+if [ $# -eq "0" ] || [ $1 == "-h" ]; then
+    # If arguments are provided, and the first argument is the help flag, show the help page
+    echo "strong [command] [*command's arguments]"
+    echo ""
+    echo "Apply a stronger version of a command. In spirit, the command is the same but its affects are permanent"
+    echo ""
+    echo "Example:"
+    echo "    strong alias ll='ls -la' # Shall alias it and add it to .bash_aliases for future reference"
+    return
+fi
+
+removeFileLine () {
+
+    if [ $(uname) = "Darwin" ]; then
+        sed -i '' "/$1/d" "$2"
+    else
+        sed -i "/$1/d" "$2"
+    fi
+
+}
+
+if [ $1 == "alias" ]; then
+    # run alias and add it to bash_aliases for other terminals
+
+    aName=$(echo $2 | cut -f1 -d =)
+    result=$(echo $2 | cut -f2 -d =)
+    command="alias $aName=\"$result\""
+
+    removeFileLine "alias $aName=" ~/.bash_aliases
+    eval "$command"
+    echo "$command" >> ~/.bash_aliases
+    return
+fi
+
+if [ $1 == "unalias" ]; then
+    # Unlike the alias and remove it from the bash aliases store
+
+    unalias $2
+    removeFileLine "alias $2=" ~/.bash_aliases
+    return
+fi
+
+echo "Command unknown"
