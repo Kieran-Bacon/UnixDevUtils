@@ -5,6 +5,16 @@ if [ ! -f "./$1" ]; then
     exit
 fi
 
+if [ $1 == "cloud" ]; then
+
+    # Ensure that strong is installed before continuing
+    if [ ! -f "$HOME/bin/strong" ]; then
+        $0 "strong"
+    fi
+
+    echo "alias cloud=\"source cloud\"" >> "$HOME/.bash_aliases"
+fi
+
 if [ $1 == "strong" ]; then
     # Install the strong wrapper
 
