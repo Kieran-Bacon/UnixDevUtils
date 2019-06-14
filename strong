@@ -3,24 +3,26 @@
 #! Requires to be added to the aliase as source strong
 
 if [[ ! $_ != $0 ]]; then
-    echo "ERROR :: pyenv is required to be sourced to be used. Alias pyenv='source pyenv' in .bash_aliases so that it might be \
-used nicely"
+    echo "ERROR :: strong is required to be sourced to be used."
     exit
 fi
 
 # Show the help for the program
 if [ $# -eq "0" ] || [ $1 == "-h" ]; then
     # If arguments are provided, and the first argument is the help flag, show the help page
+    echo ""
     echo "strong [command] [*command's arguments]"
     echo ""
     echo "Apply a stronger version of a command. In spirit, the command is the same but its affects are permanent"
     echo ""
     echo "Example:"
     echo "    strong alias ll='ls -la' # Shall alias it and add it to .bash_aliases for future reference"
+    echo ""
     return
 fi
 
 removeFileLine () {
+    # Remove from a file lines that contain the pattern that has been given
 
     if [ $(uname) = "Darwin" ]; then
         sed -i '' "/$1/d" "$2"
@@ -33,10 +35,34 @@ removeFileLine () {
 if [ $1 == "alias" ]; then
     # run alias and add it to bash_aliases for other terminals
 
+    # Extract the name of the alias
     aName=$(echo $2 | cut -f1 -d =)
-    result=$(echo $2 | cut -f2 -d =)
+
+    # Extract the result of the alias
+    result=$(echo $2 | cut -f2 -d =)  # Container for the valuie
+    resultIndex=3  # Keeping track of the cut index
+
+    # For each cut location - join it to the result with the cut delimiter
+    while true ; do
+
+        # Extract the section
+        extractedSection=$(echo $2 | cut -f$resultIndex -d =)
+
+        # Exit the while in the event that there is nothing left to append
+        if [ "$extractedSection" == "" ]; then
+            break
+        fi
+
+        # Update the result and the result counter
+        result="$result=$extractedSection";
+        resultIndex=$((resultIndex + 1))
+
+    done
+
+    # Generate the overall command
     command="alias $aName=\"$result\""
 
+    # Perform alias and persisten actions
     removeFileLine "alias $aName=" ~/.bash_aliases
     eval "$command"
     echo "$command" >> ~/.bash_aliases
