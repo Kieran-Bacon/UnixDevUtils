@@ -39,8 +39,8 @@ if [ ! -d "$HOME/bin" ]; then
     mkdir "$HOME/bin"
 fi
 
-# Copy the software to the binary directory
-ln -s "./$1" "$HOME/bin/"
+# Create a symbolic link to the file such that updates shall automatically be deployed
+ln -s "$(pwd)/$1" "$HOME/bin"
 
 # Update the permissions of file
-chmod +x "./$1"
+chmod +x "$HOME/bin/$1"
