@@ -5,6 +5,26 @@ if [ ! -f "./$1" ]; then
     exit
 fi
 
+if [ $1 == "cloud" ]; then
+
+    # Ensure that strong is installed before continuing
+    if [ ! -f "$HOME/bin/strong" ]; then
+        $0 "strong"
+    fi
+
+    echo "alias cloud=\"source cloud\"" >> "$HOME/.bash_aliases"
+fi
+
+if [ $1 == "strong" ]; then
+    # Install the strong wrapper
+
+    if [ ! -f "$HOME/.bash_aliases" ]; then
+        touch "$HOME/.bash_aliases"
+    fi
+
+    echo "alias strong=\"source strong\"" >> "$HOME/.bash_aliases"
+fi
+
 if [ $1 == "pyenv" ]; then
     # Install the virtual environment
     sudo apt-get install python3-venv
@@ -29,8 +49,8 @@ if [ ! -d "$HOME/bin" ]; then
     mkdir "$HOME/bin"
 fi
 
-# Copy the software to the binary directory
-cp "./$1" "$HOME/bin/"
+# Create a symbolic link to the file such that updates shall automatically be deployed
+ln -s "$(pwd)/$1" "$HOME/bin"
 
 # Update the permissions of file
-sudo chmod +x "$HOME/bin/$1"
+chmod +x "$HOME/bin/$1"
