@@ -116,6 +116,7 @@ if [ $1 == "-r" ]; then
     return
 fi
 
+# Create a symbolic link to the environment python
 if [ $1 == "-s" ]; then
 
     # Assert that the flag has the correct number of arguments
