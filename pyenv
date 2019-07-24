@@ -132,7 +132,7 @@ if [ $1 == "-s" ]; then
         linkPath="$3"
     fi
 
-    ln -s "$PYENVHOME/$2/bin/python" "$linkPath"
+    ln -s "$PYENVHOME/$2/bin" "$linkPath"
     return
 fi
 
