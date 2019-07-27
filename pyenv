@@ -66,6 +66,7 @@ if [ $1 == "-c" ]; then
     # Create the environment
     python3 -m venv "$environment_path"
 
+    echo "Created environment: $2"
     return
 fi
 
@@ -82,7 +83,7 @@ if [ $1 == "-d" ]; then
 
     if [ -d "$environment_path" ]; then
         rm -r "$environment_path"
-        echo "Deleted environment $2"
+        echo "Deleted environment: $2"
         return
     else
         echo "Could not find an environment by the name '$2' to delete"
