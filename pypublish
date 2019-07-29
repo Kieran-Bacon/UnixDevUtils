@@ -6,3 +6,5 @@ if [ $1 == "real" ]; then
 else
     python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 fi
+
+rm -r dist/
