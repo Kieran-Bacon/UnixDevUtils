@@ -65,8 +65,14 @@ if [ $1 == "-c" ]; then
 
     # Create the environment
     python3 -m venv "$environment_path"
-
     echo "Created environment: $2"
+
+    echo "Upgrading pip..."
+    pyenv $2
+    pip install --upgrade pip
+    deactivate
+    echo "Complete"
+
     return
 fi
 
