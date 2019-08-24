@@ -93,7 +93,7 @@ if [ $1 == "-a" ] || [ $1 == "-ak" ]; then
         ssh-copy-id "$3" || { echo "Failed to copy password across"; return; }
 
         # Write the remote machine definition to cloud addresses
-        echo "$2 !-o ServerAliveInterval=30 $3" >> "$ADDRESSES"
+        echo "$2 ! -o ServerAliveInterval=30 $3" >> "$ADDRESSES"
     fi
 
     echo "Complete."
