@@ -7,12 +7,36 @@ fi
 
 if [ $1 == "cloud" ]; then
 
+    # Installing dependencies
+    if [ $(uname) = "Darwin" ]; then
+        brew install putty
+    else
+        sudo apt-get install putty-tools
+    fi
+
     # Ensure that strong is installed before continuing
     if [ ! -f "$HOME/bin/strong" ]; then
         $0 "strong"
     fi
 
+    # Add the alias for cloud
     echo "alias cloud=\"source cloud\"" >> "$HOME/.bash_aliases"
+
+    # Ensure that cloud file exists
+    if [ ! -f "$HOME/.cloud_addresses" ]; then
+        touch "$HOME/.cloud_addresses"
+    fi
+
+    # Ensure that cloud file exists
+    if [ ! -d "$HOME/.cloud_keys" ]; then
+        mkdir "$HOME/.cloud_keys"
+    fi
+
+    # Install cloud ssh
+    ln -s "$(pwd)/cloud_ssh" "$HOME/bin"
+    chmod +x "$HOME/bin/cloud_ssh"
+    echo "alias ssh=cloud_ssh" >> "$HOME/.bash_aliases"
+
 fi
 
 if [ $1 == "strong" ]; then
