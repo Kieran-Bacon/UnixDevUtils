@@ -70,6 +70,8 @@ if [ $1 == "-c" ]; then
     echo "Upgrading pip..."
     pyenv $2
     pip install --upgrade pip
+    pip install ipykernel
+    python -m ipykernel install --display-name $2
     deactivate
     echo "Complete"
 
