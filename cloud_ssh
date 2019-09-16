@@ -6,6 +6,9 @@ if [ $# -eq "1" ]; then
 
     if [ "$command" != "" ]; then
         eval "ssh $command"
+    else
+        # Run the ssh command normally
+        ssh "$@"
     fi
 else
     # Run the ssh command normally

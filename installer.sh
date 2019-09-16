@@ -5,6 +5,19 @@ if [ ! -f "./$1" ]; then
     exit
 fi
 
+link_install () {
+    # Create a symbolic link to the file such that updates shall automatically be deployed
+    ln -s "$(pwd)/$1" "$HOME/bin"
+
+    # Update the permissions of file
+    chmod +x "$HOME/bin/$1"
+}
+
+# Ensure that the user binary directory is made
+if [ ! -d "$HOME/bin" ]; then
+    mkdir "$HOME/bin"
+fi
+
 if [ $1 == "cloud" ]; then
 
     # Installing dependencies
@@ -33,9 +46,12 @@ if [ $1 == "cloud" ]; then
     fi
 
     # Install cloud ssh
-    ln -s "$(pwd)/cloud_ssh" "$HOME/bin"
-    chmod +x "$HOME/bin/cloud_ssh"
+    link_install "cloud_ssh"
     echo "alias ssh=cloud_ssh" >> "$HOME/.bash_aliases"
+
+    # Trigger install for cloud sub system
+    link_install "cloud_sftp"
+    echo "alias sftp=cloud_sftp" >> "$HOME/.bash_aliases"
 
 fi
 
@@ -68,13 +84,4 @@ if [ $1 == "backup" ]; then
     mkdir "$HOME/.backup"
 fi
 
-# Ensure that the user binary directory is made
-if [ ! -d "$HOME/bin" ]; then
-    mkdir "$HOME/bin"
-fi
-
-# Create a symbolic link to the file such that updates shall automatically be deployed
-ln -s "$(pwd)/$1" "$HOME/bin"
-
-# Update the permissions of file
-chmod +x "$HOME/bin/$1"
+link_install "$1"

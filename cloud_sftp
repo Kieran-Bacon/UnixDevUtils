@@ -1,0 +1,71 @@
+#!/bin/bash
+
+help () {
+    echo ""
+    echo "sftp [cloud_address] [function] [source] [destination]"
+    echo ""
+    echo "By passing the cloud name as set up by 'cloud -c' we can quickly access sftp"
+    echo ""
+    echo "    [cloud_address]         The alias for the remote, as set up by cloud -c, to sftp into"
+    echo "    [function] -o|-g|-p     Open or Get/Put from remote. Dictates the direction of transferal"
+    echo "    [source]                Source path which is to be copied to destination"
+    echo "    [destination]           Destination path where the source is to be copied to"
+    echo ""
+    echo "Example:"
+    echo "    sftp web-dev -g /home/baconk1/work.ini work.ini"
+    echo "    sftp web-dev -p replacement.ini /home/baconk1/work.ini"
+    echo ""
+    echo "############  OR  #############"
+    echo ""
+    sftp -h
+}
+
+if [ $# -eq "0" ] || [ $1 == "-h" ]; then
+
+    help
+    exit
+
+else
+
+    # Check to see if there is an address with that name
+    command=$(cat "$HOME/.cloud_addresses" | grep "$1" | cut -f2 -d ! )
+
+    if [ "$command" != "" ]; then
+
+        function="$2"
+        source="$3"
+        destination="$4"
+
+        if [ "$function" == "" ] || ([ "$function" != "-o" ] && ( [ "$source" == "" ] || [ "$destination" == "" ])) ; then
+            echo "Invalid arguments combination passed: '$@'"
+            help
+            exit
+        fi
+
+        if [ "$function" == "-o" ]; then
+            # Getting from remote
+            eval "sftp $command"
+
+        elif [ "$function" == "-g" ]; then
+            # Getting from remote
+            eval "sftp -r $command:$3 $4"
+
+        elif [ "$function" == "-p" ]; then
+            # Putting on remove
+            if [ -f  "$3" ]; then
+                eval "sftp $command:$4 <<< $'put $3'"
+
+            elif [ -d "$3" ]; then
+                eval "sftp $command:$4 <<< $'put -r $3'"
+
+            else
+                echo "Source file is invalid: '$3'"
+                help
+            fi
+        fi
+
+    else
+        # Run the sftp command normally
+        sftp "$@"
+    fi
+fi

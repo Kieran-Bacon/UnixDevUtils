@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# Show the help for the program
-if [ $# -eq "0" ] || [ $1 == "-h" ]; then
-    # If arguments are provided, and the first argument is the help flag, show the help page
+help () {
     echo ""
     echo "cloud [-a|-r|-l] [instance name] [instance ip:port]"
     echo ""
@@ -14,6 +12,12 @@ if [ $# -eq "0" ] || [ $1 == "-h" ]; then
     echo "    # Registers key... requires password... aliases.... then"
     echo "    sshdev  # Logs you straight into the instance"
     echo ""
+}
+
+# Show the help for the program
+if [ $# -eq "0" ] || [ $1 == "-h" ]; then
+    # If arguments are provided, and the first argument is the help flag, show the help page
+    help
     return
 fi
 
@@ -113,3 +117,6 @@ if [ $1 == "-l" ]; then
     done
     return
 fi
+
+echo "Unrecognised command: $@"
+help
