@@ -2,13 +2,14 @@
 
 help () {
     echo ""
-    echo "cloud [-a|-r|-l] [instance name] [instance ip:port]"
+    echo "cloud [-a|-ak|-r|-l] [instance name] [instance ip:port]"
     echo ""
     echo "Manage cloud instances via setting up ssh connections and keys - cloud provides the utility of registering a"
     echo "rsa key with an instance and aliasing the instance ssh connection for quick access."
     echo ""
     echo "Example:"
     echo "    cloud -a dev 10.63.43.134"
+    echo "    cloud -ak dev ubuntu@10.63.43.134 key.pem"
     echo "    # Registers key... requires password... aliases.... then"
     echo "    sshdev  # Logs you straight into the instance"
     echo ""
@@ -36,7 +37,7 @@ removeKey () {
         # Remove the key or unregister the IP address
         if [ -f "$KEYS/$1_key.pem" ]; then
             echo "removing stored key..."
-            rm "$1_key.pem"
+            rm "$KEYS/$1_key.pem"
         fi
 
         #! Requires that the cloud address has an @ sign in it
@@ -77,15 +78,16 @@ if [ $1 == "-a" ] || [ $1 == "-ak" ]; then
         # Convert Key if required
         if [ ${4: -4} == ".ppk" ]; then
             echo "converting key to pem..."
-            key_name="$2_key.pem"
             puttygen "$4" -O private-openssh -o "$key_name"
-            chmod 400 "$key_name"
         else
+            echo "preparing key..."
             cp "$4" "$key_name"
         fi
 
         # Copy the key into the cloud key store - remove the extra key produced
         cp "$key_name" "$KEYS/$key_name"
+        chmod 400 "$KEYS/$key_name"
+
         rm "$key_name"
 
         # Write the remote machine definition to cloud addresses

@@ -91,6 +91,7 @@ if [ $1 == "-d" ]; then
 
     if [ -d "$environment_path" ]; then
         rm -r "$environment_path"
+        jupyter kernelspec uninstall -f "$2"
         echo "Deleted environment: $2"
         return
     else

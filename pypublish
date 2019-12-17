@@ -7,4 +7,5 @@ else
     python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 fi
 
+rm -r build/
 rm -r dist/
