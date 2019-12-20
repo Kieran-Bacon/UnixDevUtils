@@ -71,7 +71,7 @@ if [ $1 == "-c" ]; then
     pyenv $2
     pip install --upgrade pip
     pip install ipykernel
-    sudo python -m ipykernel install --name $2 --user
+    python -m ipykernel install --name $2 --user
     deactivate
     echo "Complete"
 
