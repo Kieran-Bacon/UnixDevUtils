@@ -69,6 +69,10 @@ if [ $1 == "pyenv" ]; then
     # Install the virtual environment
     sudo apt-get install python3-venv
 
+    # Ensure that jupyter is installed and so is it's kernel
+    pip3 install jupyter
+    pip3 install ipykernel
+
     # make the directory to save environments
     mkdir "$HOME/.pyenvs"
 
