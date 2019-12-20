@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ $# -eq "1" ]; then
+    # Check to see if the name is recognised by cloud
+    command=$(cat "$HOME/.cloud_addresses" | grep "$1" | cut -f2 -d ! )
+
+    if [ "$command" != "" ]; then
+        eval "ssh $command"
+    else
+        # Run the ssh command normally
+        ssh "$@"
+    fi
+else
+    # Run the ssh command normally
+    ssh "$@"
+fi

@@ -65,6 +65,15 @@ if [ $1 == "-c" ]; then
 
     # Create the environment
     python3 -m venv "$environment_path"
+    echo "Created environment: $2"
+
+    echo "Upgrading pip..."
+    pyenv $2
+    pip install --upgrade pip
+    pip install ipykernel
+    python -m ipykernel install --name $2 --user
+    deactivate
+    echo "Complete"
 
     return
 fi
@@ -82,12 +91,32 @@ if [ $1 == "-d" ]; then
 
     if [ -d "$environment_path" ]; then
         rm -r "$environment_path"
-        echo "Deleted environment $2"
+        jupyter kernelspec uninstall -f "$2"
+        echo "Deleted environment: $2"
         return
     else
         echo "Could not find an environment by the name '$2' to delete"
         return
     fi
+fi
+
+# Create a symbolic link to the environment python
+if [ $1 == "-s" ]; then
+    if [ ! $# -eq "3" ]; then
+        echo "pyenv -s [environment name] [path/name of symbolic link]"
+        return
+    fi
+
+    # Assert that the environment
+    environment_path="$PYENVHOME/$2/bin/python"
+
+    if [ -f "$environment_path" ]; then
+        ln -s "$environment_path" $3
+    else
+        echo "There is no environment by that name (or at least... no python executable)"
+    fi
+
+    return
 fi
 
 # List the python environments available

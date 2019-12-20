@@ -1,57 +1,129 @@
 #!/bin/bash
 
-# Show the help for the program
-if [ $# -eq "0" ] || [ $1 == "-h" ]; then
-    # If arguments are provided, and the first argument is the help flag, show the help page
+if [[ ! $_ != $0 ]]; then
+    echo "ERROR :: cloud is required to be sourced to be used."
+    exit
+fi
+
+help () {
     echo ""
-    echo "cloud [-a|-r|-l] [instance name] [instance ip:port]"
+    echo "cloud [-a|-ak|-r|-l] [instance name] [instance ip:port]"
     echo ""
     echo "Manage cloud instances via setting up ssh connections and keys - cloud provides the utility of registering a"
     echo "rsa key with an instance and aliasing the instance ssh connection for quick access."
     echo ""
     echo "Example:"
     echo "    cloud -a dev 10.63.43.134"
+    echo "    cloud -ak dev ubuntu@10.63.43.134 key.pem"
     echo "    # Registers key... requires password... aliases.... then"
     echo "    sshdev  # Logs you straight into the instance"
     echo ""
+}
+
+# Show the help for the program
+if [ $# -eq "0" ] || [ $1 == "-h" ]; then
+    # If arguments are provided, and the first argument is the help flag, show the help page
+    help
     return
 fi
+
+ADDRESSES="$HOME/.cloud_addresses"
+KEYS="$HOME/.cloud_keys"
 
 removeKey () {
     # Remove the IP Key if it has already been set
 
-    ip=$(cat "$HOME/.bash_aliases" | grep "ssh$1" | cut -f2 -d @ | tr -d \")
+    name=$(cat "$ADDRESSES" | grep "$1" | cut -f2 -d ! )
 
-    if [ "$ip" != "" ]; then
+    if [ "$name" != "" ]; then
+        # The cloud instance exists
+        echo "Removing history of remote..."
+
+        # Remove the key or unregister the IP address
+        if [ -f "$KEYS/$1_key.pem" ]; then
+            echo "removing stored key..."
+            rm "$KEYS/$1_key.pem"
+        fi
+
+        #! Requires that the cloud address has an @ sign in it
+        echo "Deregistering remote ip..."
+        ip=$(cat "$ADDRESSES" | grep "$1" | cut -f2 -d @ | tr -d \")
         ssh-keygen -R "$ip"
+
+        # Remove it's information from addresses
+        if [ $(uname) = "Darwin" ]; then
+            sed -i '' "/$1/d" "$ADDRESSES"
+        else
+            sed -i "/$1/d" "$ADDRESSES"
+        fi
+
+        echo "Removed."
     fi
 }
 
-if [ $1 == "-a" ]; then
+if [ $1 == "-a" ] || [ $1 == "-ak" ]; then
+    echo "Adding remote machine '$2'..."
 
     # Check as to whether this is an update - remove the previous key if set
     removeKey "$2"
 
-    # Generate and copy local key across for use
-    ssh-copy-id "$3" || { echo "Failed to copy password across"; return; }
+    if [ $1 == "-ak" ]; then
+        # A key was provided in the 4 position - save key and proceed
+        echo "Storing key for remote..."
 
-    # Create ssh alias for quick access
-    strong alias "ssh$2"="ssh -o ServerAliveInterval=30 $3"
+        # Ensure that the key is valid
+        if [ ! -f "$4" ]; then
+            echo "Couldn't find file at $4 which is to be the key"
+            return
+        fi
+
+        # Define a name for the key based on the name of the remote machine
+        key_name="$2_key.pem"
+
+        # Convert Key if required
+        if [ ${4: -4} == ".ppk" ]; then
+            echo "converting key to pem..."
+            puttygen "$4" -O private-openssh -o "$key_name"
+        else
+            echo "preparing key..."
+            cp "$4" "$key_name"
+        fi
+
+        # Copy the key into the cloud key store - remove the extra key produced
+        cp "$key_name" "$KEYS/$key_name"
+        chmod 400 "$KEYS/$key_name"
+
+        rm "$key_name"
+
+        # Write the remote machine definition to cloud addresses
+        echo "$2 ! -i "$KEYS/$key_name" -o ServerAliveInterval=30 $3" >> "$ADDRESSES"
+    else
+
+        # Connect to remote machine and set up login
+        echo "Connecting to remote to sign password..."
+        ssh-copy-id "$3" || { echo "Failed to copy password across"; return; }
+
+        # Write the remote machine definition to cloud addresses
+        echo "$2 ! -o ServerAliveInterval=30 $3" >> "$ADDRESSES"
+    fi
+
+    echo "Complete."
     return
 fi
 
 if [ $1 == "-r" ]; then
-
     # Extract the IP from the alias - remove the key to the ip
     removeKey "$2"
-
-    # Unalias the key
-    strong unalias "ssh$2"
-
     return
 fi
 
 if [ $1 == "-l" ]; then
-    sed -n -e '/ssh/p' ~/.bash_aliases
+    for var in $(cat "$ADDRESSES" | cut -f1 -d ! )
+    do
+        echo "$var"
+    done
     return
 fi
+
+echo "Unrecognised command: $@"
+help
