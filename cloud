@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ ! $_ != $0 ]]; then
+    echo "ERROR :: cloud is required to be sourced to be used."
+    exit
+fi
+
 help () {
     echo ""
     echo "cloud [-a|-ak|-r|-l] [instance name] [instance ip:port]"
