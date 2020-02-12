@@ -22,6 +22,7 @@ if [ $# -eq "0" ] || [ $1 == "-h" ]; then
     echo "    -l                   List virtual environments that have been created"
     echo "    -r                   Print the required/install packages of the environment"
     echo "    -s [name] {path}     Create symbolic link to python environment in pwd (if path at path)"
+    echo "    -p [name]            Edit the pip configuration file of the environment specified"
     return
 fi
 
@@ -69,12 +70,18 @@ if [ $1 == "-c" ]; then
 
     echo "Upgrading pip..."
     pyenv $2
+
+    # Install all the necessary development packages
     pip install --upgrade pip
     pip install ipykernel
+    pip install pylint
+
+    # Add the environment into the ipython kernel options
     python -m ipykernel install --name $2 --user
+
+    # Deactivate the environment and complete the setup process
     deactivate
     echo "Complete"
-
     return
 fi
 
@@ -162,6 +169,27 @@ if [ $1 == "-s" ]; then
     fi
 
     ln -s "$PYENVHOME/$2/bin" "$linkPath"
+    return
+fi
+
+# Access the pip config for the environment
+if [ $1 == "-p" ]; then
+
+    # Assert that the flag has the correct number of arguments
+    if [ $# -eq "1" ]; then
+        echo "-p requires the environment name"
+        return
+    fi
+
+    environment_path="$PYENVHOME/$2"
+    configuration_path="$environment_path/pip.conf"
+
+    if [ -d "$environment_path" ]; then
+        nano "$configuration_path"
+    else
+        echo "No environment was found with that name ($2)"
+    fi
+
     return
 fi
 
