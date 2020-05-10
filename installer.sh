@@ -1,16 +1,41 @@
-# installer
+#!/bin/bash
 
 if [ ! -f "./$1" ]; then
     echo "Unrecognised name. Exitting"
     exit
 fi
 
-link_install () {
+if [ "$2" == "-g" ]; then
+    global_flag="True"
+else
+    global_flag="False"
+fi
+
+
+sudo_link_install () {
+    # Create a symbolic link to the file such that updates shall automatically be deployed
+    sudo ln -s "$(pwd)/$1" "/usr/local/bin"
+
+    # Update the permissions of file
+    sudo chmod +x "/usr/local/bin/$1"
+}
+
+local_link_install () {
     # Create a symbolic link to the file such that updates shall automatically be deployed
     ln -s "$(pwd)/$1" "$HOME/bin"
 
     # Update the permissions of file
     chmod +x "$HOME/bin/$1"
+}
+
+link_install () {
+
+    if [ $global_flag == "True" ]; then
+        sudo_link_install $1
+    else
+        local_link_install $1
+    fi
+
 }
 
 # Ensure that the user binary directory is made
@@ -66,12 +91,11 @@ if [ $1 == "strong" ]; then
 fi
 
 if [ $1 == "pyenv" ]; then
-    # Install the virtual environment
-    sudo apt-get install python3-venv
+    # Install the necessary python packages
+    sudo apt-get install python3-pip python3-venv
 
     # Ensure that jupyter is installed and so is it's kernel
-    pip3 install jupyter
-    pip3 install ipykernel
+    pip3 install jupyter ipykernel
 
     # make the directory to save environments
     mkdir "$HOME/.pyenvs"
@@ -86,6 +110,10 @@ if [ $1 == "backup" ]; then
 
     # Make the directory for storing info about backup logging
     mkdir "$HOME/.backup"
+fi
+
+if [ $1 == "profile" ]; then
+    mkdir "$HOME/.profiles"
 fi
 
 link_install "$1"
