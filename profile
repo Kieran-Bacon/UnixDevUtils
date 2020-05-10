@@ -14,7 +14,7 @@ help () {
     echo "                                              Create a new group config path is switch location, if config at"
     echo "                                              location then it becomes the initial profile config"
     echo "      -e, --edit      (GROUPNAME)         Edit the currently active config for the group"
-    echo "      -d, --detele    (GROUPNAME)         Delete a group"
+    echo "      -d, --delete    (GROUPNAME)         Delete a group"
     echo "      -l, --list                          Show all groups"
     echo "      -h, --help                          Display the help page"
     echo ""
