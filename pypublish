@@ -1,11 +1,44 @@
-pip install --upgrade setuptools wheel twine
-python setup.py sdist bdist_wheel
 
-if [ "$1" == "real" ]; then
-    python -m twine upload dist/*
+python_command="/usr/bin/python3"
+pip_command="/usr/bin/pip3"
+
+exit_on_error () {
+    if [ $? != 0 ]; then
+        echo "Error!"
+
+        if [ -d build/ ]; then
+            rm -r build/
+        fi
+
+        if [ -d dist/ ]; then
+            rm -r dist/
+        fi
+
+        exit
+    fi
+}
+
+if [ "$1" == "" ]; then
+    echo "pypublish [repository name]"
+    echo ""
+    echo "publish a python package to the given pypi repository, which has been defined in the '~/.pypirc'"
+    echo ""
+    echo "Currently available:"
+    $python_command -c "import pyini; print(pyini.ConfigParser().read('$HOME/.pypirc').get('distutils:index-servers').strip())"
+
 else
-    python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+    $pip_command install --upgrade setuptools wheel twine
+
+    $python_command setup.py sdist bdist_wheel
+    exit_on_error
+
+    $python_command -m twine upload -r $1 dist/*
+    exit_on_error
+
+    rm -r build/
+    rm -r dist/
+
 fi
 
-rm -r build/
-rm -r dist/
+
