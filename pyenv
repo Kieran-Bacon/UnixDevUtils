@@ -73,8 +73,7 @@ if [ $1 == "-c" ]; then
 
     # Install all the necessary development packages
     pip install --upgrade pip
-    pip install ipykernel
-    pip install pylint
+    pip install wheel ipykernel pylint pytest
 
     # Add the environment into the ipython kernel options
     python -m ipykernel install --name $2 --user
