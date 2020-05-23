@@ -1,0 +1,96 @@
+#!/bin/bash
+
+help () {
+    echo "dict FILEPATH ACTION ARG"
+    echo ""
+    echo "A simple dict implementation for the saving and getting of key values for other programs to use"
+    echo ""
+    echo "Options:"
+    echo "    -a, --add     (KEY VALUE)     Add a key value to the file"
+    echo "    -g, --get     (KEY)           Get the value from the file"
+    echo "    -d, --del     (KEY)           Delete the key value pair from the file"
+    echo "    -k, --keys                    List all keys within the dict"
+    echo "    -v, --values                  List all the values within the dict"
+    echo ""
+    echo "Exit values:"
+    echo "    0 - Normal operation"
+    echo "    1 - Error with input"
+    echo "    2 - Warning - example request for non present key"
+    echo ""
+}
+
+if [ -z $1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
+    help
+    exit
+else
+    # Check that the file path provided is valid
+    if [ ! -f $1 ]; then
+
+        if [ -d $1 ]; then
+            echo "ERROR: filepath leads to a directory"
+            exit 1
+        fi
+
+        touch $1
+        if [ $? == 1 ]; then
+            echo "ERROR: Invalid filepath"
+            exit 1
+        fi
+    fi
+fi
+
+escape () {
+    echo "$1" | sed 's/\\/\\\\/g'
+}
+capture () {
+    echo "$1" | sed 's/\\\\/\\/g'
+}
+
+if [ $2 == "-a" ] || [ $2 == "--add" ]; then
+
+    # Extract key value and make them safe
+    key=$(escape "$3")
+    value=$(escape "$4")
+
+    sed -i "/$key\t/d" $1
+    printf "$key\t$value\n" >> $1
+
+elif [ $2 == "-g" ] || [ $2 == "--get" ]; then
+    if [ -z $3 ]; then
+        echo "ERROR: key not given to get command"
+        exit 1
+    fi
+    key=$(escape "$3")
+    value=$(cat "$1" | grep "$key" | cut -f2 )
+
+    if [ -z "$value" ]; then
+        echo "WARNING: No key value"
+        exit 2
+    fi
+
+    capture "$value"
+
+elif [ $2 == "-d" ] || [ $2 == "--del" ]; then
+    key=$(escape "$3")
+    sed -i "/$key\t/d" $1
+
+    # Delete the file if all contents has been removed
+    size=$(stat -c%s $1)
+    if [ "$size" == "0" ]; then
+        rm $1
+    fi
+
+elif [ $2 == "-k" ] || [ $2 == "--keys" ]; then
+    keys=$(cat "$1" | cut -f1 )
+    capture "$keys"
+
+elif [ $2 == "-v" ] || [ $2 == "--values" ]; then
+    values=$(cat "$1" | cut -f2 )
+    capture "$values"
+
+else
+    echo "ERROR: Do not recognise argument to file"
+    echo ""
+    help
+    exit 1
+fi
