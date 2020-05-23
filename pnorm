@@ -1,0 +1,12 @@
+#!/bin/bash
+if [ -z $1 ] || [ ! -d $1 ] ; then
+    echo "Requires directory path to be given"
+    exit
+fi
+
+directory=$(realpath $1)
+echo "Normalising permissions for directory $1"
+
+IFS=$'\n'       # make newlines the only separator
+chmod 775 $(find $directory -type d)
+chmod 664 $(find $directory -type f)
