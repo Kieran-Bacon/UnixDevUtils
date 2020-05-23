@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WORKDIR="$HOME/.profiles"
+WORKDIR="$HOME/.config/.profiles"
 CONFIGS="$WORKDIR/.configs"
 
 help () {
@@ -39,19 +39,8 @@ help () {
 
 }
 
-addGroupConfig () {
-    echo "$1 ! $2" >> $CONFIGS
-
-}
-getGroupConfig () {
-    echo $(cat "$CONFIGS" | grep "$1" | cut -f2 -d ! )
-}
-delGroupConfig () {
-    sed -i "/$1/d" $CONFIGS
-}
-
 getActiveProfile () {
-    config=$(getGroupConfig $1)
+    config=$(dict $CONFIGS -g $1)
     profile=$(readlink -f $config)
     echo $(basename $profile)
 }
@@ -119,7 +108,7 @@ do
                 fi
 
                 ln -s $profile $config
-                addGroupConfig $groupname $config
+                dict $CONFIGS -a $groupname $config
 
             elif [ $var = "-e" ] || [ $var = "--edit" ]; then
 
@@ -142,7 +131,7 @@ do
                 if [ -d $group ]; then
 
                     # Get the group config location and the path to the currently selected config
-                    configpath=$(getGroupConfig $groupname)
+                    configpath=$(dict $CONFIGS -g $groupname)
                     selectedConfig=$(readlink -f $configpath)
 
                     echo "Deleting group $groupname - restoring config to be profile $(basename $selectedConfig)"
@@ -155,7 +144,7 @@ do
                     rm -r $group
 
                     # Remove the group config path record
-                    delGroupConfig $groupname
+                    dict $CONFIGS -d $groupname
 
                 else
                     echo "ERROR: Cannot delete group $groupname as it does not exist"
@@ -164,11 +153,7 @@ do
             elif [ $var = "-l" ] || [ $var = "--list" ]; then
 
                 echo "Groups:"
-
-                while IFS= read -r line
-                do
-                    echo "    $(echo $line | cut -f1 -d !)"
-                done < "$CONFIGS"
+                dict $CONFIGS --keys
 
             else
                 echo "ERROR: Unrecognised option: $var"
@@ -283,7 +268,7 @@ do
                 echo "Switching profile for $groupname to $(basename $profile)"
 
                 # The profile exists
-                configpath=$(getGroupConfig $groupname)
+                configpath=$(dict $CONFIGS -g $groupname)
 
                 rm $configpath
                 ln -s $profile $configpath

@@ -113,7 +113,7 @@ if [ $1 == "backup" ]; then
 fi
 
 if [ $1 == "profile" ]; then
-    mkdir "$HOME/.profiles"
+    mkdir "$HOME/.config/.profiles"
 fi
 
 link_install "$1"
