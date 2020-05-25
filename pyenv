@@ -69,7 +69,7 @@ if [ $1 == "-c" ]; then
     echo "Created environment: $2"
 
     echo "Upgrading pip..."
-    pyenv $2
+    source "$environment_path/bin/activate"
 
     # Install all the necessary development packages
     pip install --upgrade pip
