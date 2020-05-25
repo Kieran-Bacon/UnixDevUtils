@@ -116,4 +116,27 @@ if [ $1 == "profile" ]; then
     mkdir "$HOME/.config/.profiles"
 fi
 
+if [ $1 == "reddit_wallpaper.py" ]; then
+
+    source pyenv -c wallpaper
+    source pyenv wallpaper
+    pip install bs4 Pillow requests
+    deactivate
+
+    if [ "$2" == "-g" ]; then
+        executable_path="/usr/local/bin"
+        sudo ln -s "$(pwd)/$1" "$executable_path"
+    else
+        executable_path="$HOME/bin"
+        ln -s "$(pwd)/$1" "$executable_path"
+    fi
+
+    crontab -l > tempcron
+    echo "@reboot pyenv wallpaper; python $executable_path/$1; deactivate" > tempcron
+    crontab tempcron
+    rm tempcron
+
+    exit
+fi
+
 link_install "$1"
