@@ -118,11 +118,6 @@ fi
 
 if [ $1 == "reddit_wallpaper.py" ]; then
 
-    source pyenv -c wallpaper
-    source pyenv wallpaper
-    pip install bs4 Pillow requests
-    deactivate
-
     if [ "$2" == "-g" ]; then
         executable_path="/usr/local/bin"
         sudo ln -s "$(pwd)/$1" "$executable_path"
@@ -131,10 +126,25 @@ if [ $1 == "reddit_wallpaper.py" ]; then
         ln -s "$(pwd)/$1" "$executable_path"
     fi
 
-    crontab -l > tempcron
-    echo "@reboot pyenv wallpaper; python $executable_path/$1; deactivate" > tempcron
-    crontab tempcron
-    rm tempcron
+    source pyenv -c wallpaper
+    source pyenv wallpaper
+    pip install bs4 Pillow requests
+
+    sudo echo "[Unit]
+Description=Download lastest hot wallpaper of reddit/r/wallpapers and set as background
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=$(which python) $executable_path/$1 --wallpaper-location $HOME/Pictures/wallpaper
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/$USER_reddit_wallpaper.service
+
+    deactivate
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable $USER_reddit_wallpaper
 
     exit
 fi
